@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Toko Vape</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 2px rgba(129, 140, 248, 0.6)); }
+            50% { filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.8)); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .logo-container {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .menu-icon {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .glow-effect {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .sidebar {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .hover-scale {
+            transition: transform 0.2s ease;
+        }
+
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900 text-white min-h-screen">
+    <!-- Mobile Menu Toggle -->
+    <button id="sidebarToggle" class="fixed top-4 left-4 z-50 md:hidden bg-indigo-600 p-2 rounded-lg menu-icon">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 glass-effect z-40 shadow-lg">
+        <div class="flex flex-col h-full">
+            <!-- Logo Section -->
+            <div class="p-6">
+                <div class="logo-container flex justify-center mb-4">
+                    <svg viewBox="0 0 100 100" width="80" height="80" class="glow-effect">
+                        <!-- Cloud Base -->
+                        <path d="M20,60 Q50,80 80,60" stroke="#818CF8" fill="none" stroke-width="4"/>
+                        <!-- Vapor Swirls -->
+                        <path d="M40,50 Q50,30 60,50" stroke="#818CF8" fill="none" stroke-width="3" class="vapor">
+                            <animate attributeName="d" 
+                                    dur="3s" 
+                                    repeatCount="indefinite"
+                                    values="M40,50 Q50,30 60,50;
+                                           M40,50 Q50,20 60,50;
+                                           M40,50 Q50,30 60,50"/>
+                        </path>
+                        <path d="M45,40 Q50,20 55,40" stroke="#818CF8" fill="none" stroke-width="2" class="vapor">
+                            <animate attributeName="d" 
+                                    dur="2.5s" 
+                                    repeatCount="indefinite"
+                                    values="M45,40 Q50,20 55,40;
+                                           M45,40 Q50,10 55,40;
+                                           M45,40 Q50,20 55,40"/>
+                        </path>
+                        <!-- Device Body -->
+                        <rect x="40" y="60" width="20" height="30" rx="5" fill="#818CF8"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-center text-indigo-300">VAPE STORE</h1>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6">
+                <ul class="space-y-2">
+                    <li class="slide-in" style="animation-delay: 0.1s">
+                        <button onclick="showTable('products')" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-indigo-600 rounded-lg transition-colors hover-scale">
+                            <i class="fas fa-box-open mr-3"></i>
+                            <span>Perangkat</span>
+                        </button>
+                    </li>
+                    <li class="slide-in" style="animation-delay: 0.2s">
+                        <button onclick="showTable('vapejuices')" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-indigo-600 rounded-lg transition-colors hover-scale">
+                            <i class="fas fa-flask mr-3"></i>
+                            <span>Liquid</span>
+                        </button>
+                    </li>
+                    <li class="slide-in" style="animation-delay: 0.3s">
+                        <button onclick="showTable('categories')" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-indigo-600 rounded-lg transition-colors hover-scale">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span>Kategori</span>
+                        </button>
+                    </li>
+                    <li class="slide-in" style="animation-delay: 0.4s">
+                        <button onclick="showTable('suppliers')" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-indigo-600 rounded-lg transition-colors hover-scale">
+                            <i class="fas fa-truck mr-3"></i>
+                            <span>Supplier</span>
+                        </button>
+                    </li>
+                    <li class="slide-in" style="animation-delay: 0.5s">
+                        <button onclick="showTable('customers')" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-indigo-600 rounded-lg transition-colors hover-scale">
+                            <i class="fas fa-users mr-3"></i>
+                            <span>Pelanggan</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 p-8">
+        <!-- Header with Title -->
+        <div class="mb-8 slide-in">
+            <h2 id="pageTitle" class="text-3xl font-bold text-indigo-300">Dashboard</h2>
+            <p class="text-gray-400">Kelola data toko dengan mudah</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6 slide-in" style="animation-delay: 0.2s">
+            <div class="max-w-xl glass-effect rounded-lg p-2 flex gap-2 hover-scale">
+                <input type="text" id="searchInput" 
+                       placeholder="Cari..." 
+                       class="flex-1 px-4 py-2 rounded-md bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-indigo-500">
+                <button onclick="performSearch()" 
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-search"></i>
+                </button>
+                <button onclick="clearSearch()" 
+                        class="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="mb-8 glass-effect p-6 rounded-xl shadow-xl slide-in hover-scale" style="animation-delay: 0.3s">
+            <h3 class="text-xl font-semibold mb-4 text-indigo-300">
+                <span id="formTitle">Tambah Data Baru</span>
+            </h3>
+            <form id="dataForm" class="space-y-4">
+                <div id="formFields" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center hover-scale">
+                        <i class="fas fa-save mr-2"></i> Simpan
+                    </button>
+                    <button type="button" onclick="resetForm()" class="px-6 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors flex items-center hover-scale">
+                        <i class="fas fa-undo mr-2"></i> Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Data Table -->
+        <div class="glass-effect rounded-xl shadow-xl overflow-hidden slide-in hover-scale" style="animation-delay: 0.4s">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-indigo-900 text-indigo-300">
+                        <tr id="tableHeaders"></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-900 text-white py-4 mt-8 slide-in" style="animation-delay: 0.5s">
+            <div class="container mx-auto px-6 text-center">
+                <p class="text-sm">&copy; 2024 Andrian saputra. Semua hak cipta dilindungi.</p>
+                <div class="mt-2">
+                    <a href="#" class="text-gray-400 hover:text-indigo-500 text-sm mx-2 hover-scale">Kebijakan Privasi</a>
+                    <a href="#" class="text-gray-400 hover:text-indigo-500 text-sm mx-2 hover-scale">Syarat dan Ketentuan</a>
+                </div>
+                <div class="mt-2">
+                    <a href="https://www.facebook.com" target="_blank" class="text-gray-400 hover:text-indigo-500 text-lg mx-2 hover-scale">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-indigo-500 text-lg mx-2 hover-scale">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://www.instagram.com" target="_blank" class="text-gray-400 hover:text-indigo-500 text-lg mx-2 hover-scale">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // Initialize database
+        const db = new Dexie('VapeStore');
+
+        // Database schema
+        const schemas = {
+            products: [
+                { name: 'name', type: 'text', label: 'Nama Perangkat' },
+                { name: 'category', type: 'text', label: 'Kategori' },
+                { name: 'price', type: 'number', label: 'Harga' },
+                { name: 'stock', type: 'number', label: 'Stok' },
+                { name: 'supplier', type: 'text', label: 'Supplier' }
+            ],
+            vapejuices: [
+                { name: 'name', type: 'text', label: 'Nama Liquid' },
+                { name: 'brand', type: 'text', label: 'Merek' },
+                { name: 'flavor', type: 'text', label: 'Rasa' },
+                { name: 'nicotine', type: 'number', label: 'Nikotin (mg)', min: 0, step: 1 },
+                { name: 'size', type: 'number', label: 'Ukuran (ml)', min: 0, step: 1 },
+                { name: 'price', type: 'number', label: 'Harga', min: 0 },
+                { name: 'stock', type: 'number', label: 'Stok', min: 0 }
+            ],
+            categories: [
+                { name: 'name', type: 'text', label: 'Nama Kategori' },
+                { name: 'description', type: 'textarea', label: 'Deskripsi' }
+            ],
+            suppliers: [
+                { name: 'name', type: 'text', label: 'Nama Supplier' },
+                { name: 'contact', type: 'text', label: 'Kontak' },
+                { name: 'address', type: 'textarea', label: 'Alamat' }
+            ],
+            customers: [
+                { name: 'name', type: 'text', label: 'Nama Pelanggan' },
+                { name: 'email', type: 'email', label: 'Email' },
+                { name: 'phone', type: 'text', label: 'Telepon' }
+            ]
+        };
+
+        let currentTable = 'products';
+        let editingId = null;
+
+        // Initialize database and load initial data
+        async function initializeDatabase() {
+            db.version(3).stores({
+                products: '++id, name, category, price, stock, supplier',
+                vapejuices: '++id, name, brand, flavor, nicotine, size, price, stock',
+                categories: '++id, name, description',
+                suppliers: '++id, name, contact, address',
+                customers: '++id, name, email, phone'
+            });
+
+            try {
+                await db.open();
+                console.log('Database initialized successfully');
+            } catch (error) {
+                console.error('Error initializing database:', error);
+                alert('Error initializing database: ' + error.message);
+            }
+        }
+
+        // Show table function
+        async function showTable(tableName) {
+            currentTable = tableName;
+            editingId = null;
+            resetForm();
+            createForm();
+            await loadTableData();
+            document.getElementById('searchInput').value = '';
+        }
+
+        // Create form fields
+        function createForm() {
+            const formFields = document.getElementById('formFields');
+            formFields.innerHTML = '';
+            
+            schemas[currentTable].forEach(field => {
+                const div = document.createElement('div');
+                if (field.type === 'textarea') {
+                    div.innerHTML = `
+                        <label class="block text-sm font-medium text-gray-300 mb-1">${field.label}</label>
+                        <textarea name="${field.name}" 
+                                class="w-full rounded-md border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 p-2"
+                                required></textarea>
+                    `;
+                } else {
+                    const additionalAttributes = field.type === 'number' 
+                        ? `min="${field.min || 0}" step="${field.step || 'any'}"` 
+                        : '';
+                    div.innerHTML = `
+                        <label class="block text-sm font-medium text-gray-300 mb-1">${field.label}</label>
+                        <input type="${field.type}" 
+                               name="${field.name}" 
+                               class="w-full rounded-md border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 p-2"
+                               ${additionalAttributes}
+                               required>
+                    `;
+                }
+                formFields.appendChild(div);
+            });
+
+            const form = document.getElementById('dataForm');
+            form.onsubmit = handleFormSubmit;
+        }
+
+        // Handle form submit
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            try {
+                const formData = new FormData(event.target);
+                const data = {};
+                
+                schemas[currentTable].forEach(field => {
+                    const value = formData.get(field.name);
+                    if (field.type === 'number') {
+                        const numValue = parseFloat(value);
+                        data[field.name] = isNaN(numValue) ? 0 : numValue;
+                    } else {
+                        data[field.name] = value || '';
+                    }
+                });
+
+                if (editingId) {
+                    await db[currentTable].update(editingId, data);
+                    alert('Data berhasil diperbarui');
+                } else {
+                    await db[currentTable].add(data);
+                    alert('Data berhasil ditambahkan');
+                }
+                
+                resetForm();
+                await loadTableData();
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            const form = document.getElementById('dataForm');
+            form.reset();
+            editingId = null;
+        }
+
+        // Load table data
+        async function loadTableData(searchTerm = '') {
+            try {
+                const tableHeaders = document.getElementById('tableHeaders');
+                const tableBody = document.getElementById('tableBody');
+                
+                tableHeaders.innerHTML = `
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID</th>
+                    ${schemas[currentTable].map(field => 
+                        `<th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">${field.label}</th>`
+                    ).join('')}
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                `;
+
+                const data = await searchData(searchTerm);
+                tableBody.innerHTML = data.map(item => `
+                    <tr class="hover:bg-gray-700">
+                        <td class="px-6 py-4 text-sm text-gray-300">${item.id}</td>
+                        ${schemas[currentTable].map(field => {
+                            let displayValue = item[field.name];
+                            if (field.type === 'number') {
+                                if (field.name === 'price') {
+                                    displayValue = formatCurrency(displayValue);
+                                } else {
+                                    displayValue = displayValue.toLocaleString();
+                                }
+                            }
+                            return `<td class="px-6 py-4 text-sm text-gray-300">${displayValue}</td>`;
+                        }).join('')}
+                        <td class="px-6 py-4 text-sm text-gray-300">
+                            <button onclick="editRow(${item.id})" class="flex items-center text-indigo-500 hover:text-indigo-700">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                            <button onclick="deleteRow(${item.id})" class="flex items-center text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash-alt mr-1"></i> Delete
+                            </button>
+                    </td>
+
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Error loading data: ' + error.message);
+            }
+        }
+
+        // Format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        // Search data
+        async function searchData(searchTerm) {
+            if (!searchTerm) {
+                return await db[currentTable].toArray();
+            }
+            return await db[currentTable].where('name').startsWithIgnoreCase(searchTerm).toArray();
+        }
+
+        // Perform search
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value;
+            loadTableData(searchTerm);
+        }
+
+        // Clear search
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            loadTableData();
+        }
+
+        // Edit row
+        async function editRow(id) {
+            try {
+                editingId = id;
+                const item = await db[currentTable].get(id);
+                if (item) {
+                    const form = document.getElementById('dataForm');
+                    schemas[currentTable].forEach(field => {
+                        const input = form.querySelector(`[name="${field.name}"]`);
+                        if (input) {
+                            input.value = item[field.name];
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error editing row:', error);
+                alert('Error editing row: ' + error.message);
+            }
+        }
+
+        // Delete row
+        async function deleteRow(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                try {
+                    await db[currentTable].delete(id);
+                    await loadTableData();
+                    alert('Data berhasil dihapus');
+                } catch (error) {
+                    console.error('Error deleting row:', error);
+                    alert('Error deleting row: ' + error.message);
+                }
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeDatabase();
+            showTable('products');
+        });
+    </script>
+</body>
+</html>
